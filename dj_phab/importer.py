@@ -255,18 +255,15 @@ class ImportRunner(object):
         """
         Execute the import
         """
-        # Start Transaction; will rollback if any uncaught exceptions encountered;
-        # otherwise commit upon completion of `with` block
-        with transaction.atomic():
-            # Fetch all users
-            UserImporter.convert_records(self.api.fetch_users())
+        # Fetch all users
+        UserImporter.convert_records(self.api.fetch_users())
 
-            # Fetch all projects
-            ProjectImporter.convert_records(self.api.fetch_projects())
+        # Fetch all projects
+        ProjectImporter.convert_records(self.api.fetch_projects())
 
-            # Fetch all repos
-            RepositoryImporter.convert_records(self.api.fetch_repositories())
+        # Fetch all repos
+        RepositoryImporter.convert_records(self.api.fetch_repositories())
 
-            # Fetch diffs modified since last import
-            PullRequestImporter.convert_records(
-                self.api.fetch_pull_requests(modified_since=last_import_time))
+        # Fetch diffs modified since last import
+        PullRequestImporter.convert_records(
+            self.api.fetch_pull_requests(modified_since=last_import_time))
