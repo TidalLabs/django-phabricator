@@ -270,7 +270,3 @@ class ImportRunner(object):
             # Fetch diffs modified since last import
             PullRequestImporter.convert_records(
                 self.api.fetch_pull_requests(modified_since=last_import_time))
-
-            # @TODO: Save the current time as last import time
-            pass
-

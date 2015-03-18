@@ -80,3 +80,21 @@ class PullRequest(TimeStampedModel, PhabModel):
 
     class Meta:
         ordering = ['date_opened',]
+
+
+class LastImportTracker(models.Model):
+    """
+    This is a singleton -- only one row permitted.
+    """
+    last_import_time = models.DateTimeField()
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super(LastImportTracker, self).save()
+
+    @classmethod
+    def get_last_import_time(cls):
+        try:
+            return cls.objects.get(pk=1)
+        except cls.DoesNotExist:
+            return None
