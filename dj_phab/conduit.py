@@ -1,4 +1,7 @@
+import logging
+import socket
 import time
+
 
 class ConduitAPI(object):
     # @TODO: convert Python-formatted args to JSON-formatted ones
@@ -54,7 +57,20 @@ class ConduitAPI(object):
         # I wish Python supported do...while
         # fetch in batches until no data or date modified < modified_since
         while True:
-            new_data = self.phabricator.differential.query(**options).response
+            # Make 5 attempts to fetch data
+            attempt_count = 0
+            while True:
+                try:
+                    new_data = self.phabricator.differential.query(**options).response
+                except socket.timeout:
+                    if attempt_count >= 4:
+                        raise
+                    else:
+                        attempt_count += 1
+                else:
+                    break
+                finally:
+                    logging.debug('connection attempt %s for offset %s' % (attempt_count, options['offset']))
 
             if modified_since:
                 # Remove any items that predate our min date modified
@@ -62,6 +78,7 @@ class ConduitAPI(object):
 
             # hang onto the data if we have any
             if len(new_data):
+                logging.info('fetched %s diffs' % len(new_data))
                 pull_requests.extend(new_data)
                 # update offset so next fetch gets the next batch
                 options['offset'] += len(new_data)
