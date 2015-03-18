@@ -95,6 +95,15 @@ class LastImportTracker(models.Model):
     @classmethod
     def get_last_import_time(cls):
         try:
-            return cls.objects.get(pk=1)
+            return cls.objects.get(pk=1).last_import_time
         except cls.DoesNotExist:
             return None
+
+    @classmethod
+    def update_last_import_time(cls, new_time):
+        try:
+            tracker = cls.objects.get(pk=1)
+        except cls.DoesNotExist:
+            tracker = cls()
+        tracker.last_import_time = new_time
+        tracker.save()

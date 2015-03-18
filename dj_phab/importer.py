@@ -154,7 +154,13 @@ class Importer(object):
             if m2m_model:
                 val = self.convert_phab_m2m(raw_val, m2m_model)
             elif fk_model and raw_val is not None:
-                val = self.convert_phab_fk(raw_val, fk_model)
+                try:
+                    val = self.convert_phab_fk(raw_val, fk_model)
+                except RelationNotImportedError:
+                    if options.required:
+                        raise
+                    else:
+                        val = None
 
             # other types
             elif options.conversion in (str, 'phid'):
@@ -255,18 +261,15 @@ class ImportRunner(object):
         """
         Execute the import
         """
-        # Start Transaction; will rollback if any uncaught exceptions encountered;
-        # otherwise commit upon completion of `with` block
-        with transaction.atomic():
-            # Fetch all users
-            UserImporter.convert_records(self.api.fetch_users())
+        # Fetch all users
+        UserImporter.convert_records(self.api.fetch_users())
 
-            # Fetch all projects
-            ProjectImporter.convert_records(self.api.fetch_projects())
+        # Fetch all projects
+        ProjectImporter.convert_records(self.api.fetch_projects())
 
-            # Fetch all repos
-            RepositoryImporter.convert_records(self.api.fetch_repositories())
+        # Fetch all repos
+        RepositoryImporter.convert_records(self.api.fetch_repositories())
 
-            # Fetch diffs modified since last import
-            PullRequestImporter.convert_records(
-                self.api.fetch_pull_requests(modified_since=last_import_time))
+        # Fetch diffs modified since last import
+        PullRequestImporter.convert_records(
+            self.api.fetch_pull_requests(modified_since=last_import_time))

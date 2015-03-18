@@ -1,4 +1,7 @@
+import logging
+import socket
 import time
+
 
 class ConduitAPI(object):
     # @TODO: convert Python-formatted args to JSON-formatted ones
@@ -19,15 +22,15 @@ class ConduitAPI(object):
         self.batch_size = batch_size
 
     def fetch_users(self, **kwargs):
-        return self.phabricator.user.query(**kwargs).values()
+        return self.phabricator.user.query(**kwargs).response
 
     def fetch_projects(self, **kwargs):
         # @TODO: handle case where N > 100, since phab returns these batched
-        response = self.phabricator.project.query(**kwargs)
+        response = self.phabricator.project.query(**kwargs).response
         return response.get('data', {}).values()
 
     def fetch_repositories(self, **kwargs):
-        return self.phabricator.repository.query(**kwargs).values()
+        return self.phabricator.repository.query(**kwargs).response
 
     def fetch_pull_requests(self, modified_since=None, **kwargs):
         """
@@ -54,7 +57,20 @@ class ConduitAPI(object):
         # I wish Python supported do...while
         # fetch in batches until no data or date modified < modified_since
         while True:
-            new_data = self.phabricator.differential.query(**options).values()
+            # Make 5 attempts to fetch data
+            attempt_count = 0
+            while True:
+                try:
+                    new_data = self.phabricator.differential.query(**options).response
+                except socket.timeout:
+                    if attempt_count >= 4:
+                        raise
+                    else:
+                        attempt_count += 1
+                else:
+                    break
+                finally:
+                    logging.debug('connection attempt %s for offset %s' % (attempt_count, options['offset']))
 
             if modified_since:
                 # Remove any items that predate our min date modified
@@ -62,6 +78,7 @@ class ConduitAPI(object):
 
             # hang onto the data if we have any
             if len(new_data):
+                logging.info('fetched %s diffs' % len(new_data))
                 pull_requests.extend(new_data)
                 # update offset so next fetch gets the next batch
                 options['offset'] += len(new_data)
