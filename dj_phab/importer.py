@@ -154,7 +154,13 @@ class Importer(object):
             if m2m_model:
                 val = self.convert_phab_m2m(raw_val, m2m_model)
             elif fk_model and raw_val is not None:
-                val = self.convert_phab_fk(raw_val, fk_model)
+                try:
+                    val = self.convert_phab_fk(raw_val, fk_model)
+                except RelationNotImportedError:
+                    if options.required:
+                        raise
+                    else:
+                        val = None
 
             # other types
             elif options.conversion in (str, 'phid'):
