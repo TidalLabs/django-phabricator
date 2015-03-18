@@ -10,6 +10,17 @@ def prep_phab_mocks():
 
     return phabricator
 
+
+class ResponseWrapper(object):
+    """
+    Because python-phabricator's raw values (which we use) are available only through the
+    ``response`` attribute, we need to wrap our dummy data similarly
+    """
+    def __init__(self, data, *args, **kwargs):
+        self.response = data
+        super(ResponseWrapper, self).__init__(*args, **kwargs)
+
+
 def get_batched_diffs(order=None, limit=None, offset=0):
     diffs = get_dummy_diffs(order)
 
@@ -30,10 +41,10 @@ def get_batched_diffs(order=None, limit=None, offset=0):
     else:
         keys_to_retrieve = ordered_keys[offset:]
 
-    return dict([(key, diffs[key]) for key in keys_to_retrieve])
+    return ResponseWrapper([diffs[key] for key in keys_to_retrieve])
 
 def get_dummy_users(*args, **kwargs):
-    return json.loads('''
+    return ResponseWrapper(json.loads('''
         {
           "0" : {
             "phid"     : "PHID-USER-froe3pl0phoe6lap2oer",
@@ -69,10 +80,10 @@ def get_dummy_users(*args, **kwargs):
             ]
           }
         }
-    ''')
+    ''').values())
 
 def get_dummy_projects(*args, **kwargs):
-    return json.loads('''
+    return ResponseWrapper(json.loads('''
         {
           "data"    : {
             "PHID-PROJ-hh55htv4ejajjtssl63x" : {
@@ -160,10 +171,10 @@ def get_dummy_projects(*args, **kwargs):
             "before" : null
           }
         }
-    ''')
+    '''))
 
 def get_dummy_repos(*args, **kwargs):
-    return json.loads('''
+    return ResponseWrapper(json.loads('''
         {
           "0"  : {
             "id"          : "27",
@@ -236,7 +247,7 @@ def get_dummy_repos(*args, **kwargs):
             "isImporting" : false
           }
         }
-    ''')
+    ''').values())
 
 def get_dummy_diffs(order=None, **kwargs):
     if order is None:

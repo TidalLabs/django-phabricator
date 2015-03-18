@@ -19,15 +19,15 @@ class ConduitAPI(object):
         self.batch_size = batch_size
 
     def fetch_users(self, **kwargs):
-        return self.phabricator.user.query(**kwargs).values()
+        return self.phabricator.user.query(**kwargs).response
 
     def fetch_projects(self, **kwargs):
         # @TODO: handle case where N > 100, since phab returns these batched
-        response = self.phabricator.project.query(**kwargs)
+        response = self.phabricator.project.query(**kwargs).response
         return response.get('data', {}).values()
 
     def fetch_repositories(self, **kwargs):
-        return self.phabricator.repository.query(**kwargs).values()
+        return self.phabricator.repository.query(**kwargs).response
 
     def fetch_pull_requests(self, modified_since=None, **kwargs):
         """
@@ -54,7 +54,7 @@ class ConduitAPI(object):
         # I wish Python supported do...while
         # fetch in batches until no data or date modified < modified_since
         while True:
-            new_data = self.phabricator.differential.query(**options).values()
+            new_data = self.phabricator.differential.query(**options).response
 
             if modified_since:
                 # Remove any items that predate our min date modified
