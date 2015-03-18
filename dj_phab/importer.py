@@ -55,26 +55,16 @@ class Importer(object):
             return
 
         # convert the data
-        data = self.map_fields()
-        m2ms = {}
-
-        # M2Ms can't be assigned the way other fields are, so extract them:
-        for (field_name, options) in self.field_map.iteritems():
-            try:
-                if options.conversion.get('phab_m2m') and field_name in data:
-                    m2ms[field_name] = data.pop(field_name)
-            except AttributeError:
-                # conversion isn't defined as a dict, thus this isn't an M2M; move on to next item
-                pass
+        fields, m2ms = self.map_fields()
 
         # Create and save new model instance
-        self.instance = self.model.objects.create(**data)
+        self.instance = self.model.objects.create(**fields)
 
-        # and attach M2Ms
+        # And attach M2Ms
         for (field_name, val_list) in m2ms.iteritems():
-            m2m = getattr(self.instance, field_name)
-            if m2m:
-                m2m.add(*val_list)
+            relationship = getattr(self.instance, field_name)
+            if relationship:
+                relationship.add(*val_list)
 
     def find_existing_instance(self):
         """
@@ -141,12 +131,15 @@ class Importer(object):
 
         @return dict mapped fields
         """
-        field_dict = {}
+        fields = {}
+        m2ms = {}
 
         for (django_name, options) in self.field_map.iteritems():
             raw_val = self.get_raw_value(options)
 
-            # convert field type
+            # Begin type conversion...
+
+            # FKs / M2Ms are stored in dicts b/c we also need to know the model they reference
             try:
                 fk_model = options.conversion.get('phab_fk')
                 m2m_model = options.conversion.get('phab_m2m')
@@ -155,26 +148,39 @@ class Importer(object):
                 fk_model = None
                 m2m_model = None
 
+            # convert raw value to correct Python type...
+            # Relationships
             if m2m_model:
                 val = self.convert_phab_m2m(raw_val, m2m_model)
             elif fk_model and raw_val is not None:
                 val = self.convert_phab_fk(raw_val, fk_model)
+
+            # other types
             elif options.conversion in (str, 'phid'):
                 # string vals don't need conversion
                 val = raw_val
+
             elif options.conversion == 'timestamp':
+                # Timestamps need conversion to datetimes
                 val = datetime.datetime.fromtimestamp(int(raw_val))
+                # And saving naive ones raises warnings
                 val = timezone.make_aware(val, timezone.get_current_timezone())
+
             elif callable(options.conversion):
+                # Any callable other than `str` can be used for a custom conversion
                 val = options.conversion(raw_val)
             else:
                 # if all else fails
                 val = raw_val
 
+            # add it to the list of values we'll return
             if val is not None:
-                field_dict[django_name] = val
+                if m2m_model:
+                    m2ms[django_name] = val
+                else:
+                    fields[django_name] = val
 
-        return field_dict
+        return fields, m2ms
 
 
 class UserImporter(Importer):
