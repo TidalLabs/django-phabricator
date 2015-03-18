@@ -1,4 +1,5 @@
 import datetime
+from copy import deepcopy
 from django.test import TestCase
 from django.utils import timezone
 from dj_phab.models import PhabUser, Project, Repository, PullRequest
@@ -27,6 +28,14 @@ class TestUserImporter(TestCase):
         u'roles': [u'verified', u'approved', u'activated'],
         u'image': None,
         u'uri': u'http://www.example.com/p/luke/'
+    }
+    obiwan_dict = {
+        u'userName': u'obiwan',
+        u'phid': u'PHID-USER-987',
+        u'realName': u'Obiwan Kenobi',
+        u'roles': [u'verified', u'approved', u'activated'],
+        u'image': None,
+        u'uri': u'http://www.example.com/p/obiwan/'
     }
 
     def test_smoke(self):
@@ -189,11 +198,12 @@ class TestPullRequestImporter(TestCase):
 
     def setUp(self):
         UserImporter.convert_records([TestUserImporter.noemi_dict,
-                                      TestUserImporter.luke_dict])
+                                      TestUserImporter.luke_dict,
+                                      TestUserImporter.obiwan_dict,])
         ProjectImporter.convert_records([TestProjectImporter.proj_1_dict,
-                                         TestProjectImporter.proj_2_dict])
+                                         TestProjectImporter.proj_2_dict,])
         RepositoryImporter.convert_records([TestRepositoryImporter.repo_1_dict,
-                                            TestRepositoryImporter.repo_2_dict])
+                                            TestRepositoryImporter.repo_2_dict,])
 
     def test_smoke(self):
         pass
@@ -217,3 +227,22 @@ class TestPullRequestImporter(TestCase):
 
         reviewer_usernames = [reviewer.user_name for reviewer in change.reviewers.all()]
         self.assertItemsEqual(reviewer_usernames, ['noemi', 'luke',])
+
+        # make sure updating works correctly
+        updated_diff = deepcopy(self.diff_1_dict)
+        updated_diff['reviewers'] = [u'PHID-USER-7ij7ij7ij7ij7ij7ij7i', u'PHID-USER-987',]
+        updated_diff['lineCount'] = 33
+        updated_diff['status'] = PullRequest.STATUS.abandoned
+
+        PullRequestImporter(updated_diff).convert_record()
+
+        self.assertEqual(PullRequest.objects.count(), 1)
+        updated = PullRequest.objects.get(phab_id=628)
+        self.assertEqual(updated.title, 'Change Stuff')
+        self.assertEqual(updated.author.user_name, 'luke')
+        self.assertEqual(updated.line_count, 33)
+        self.assertEqual(updated.status, PullRequest.STATUS.abandoned)
+        reviewer_usernames = [reviewer.user_name for reviewer in updated.reviewers.all()]
+        self.assertItemsEqual(reviewer_usernames, ['noemi', 'obiwan',])
+
+

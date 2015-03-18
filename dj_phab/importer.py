@@ -49,22 +49,23 @@ class Importer(object):
         Convert a dict of data received from Phab into a Django model; save model to DB.
         If a model already exists for record with given PHID, skips processing.
         """
-        # If we already have an instance, skip further processing (for now);
-        # @TODO: update existing record
-        if self.instance:
-            return
-
         # convert the data
         fields, m2ms = self.map_fields()
 
-        # Create and save new model instance
-        self.instance = self.model.objects.create(**fields)
+        # If we already have an instance, update existing record
+        if self.instance:
+            for field_name, value in fields.iteritems():
+                if hasattr(self.instance, field_name):
+                    setattr(self.instance, field_name, value)
+            self.instance.save()
+        else:
+            # Create and save new model instance
+            self.instance = self.model.objects.create(**fields)
 
         # And attach M2Ms
-        for (field_name, val_list) in m2ms.iteritems():
-            relationship = getattr(self.instance, field_name)
-            if relationship:
-                relationship.add(*val_list)
+        for field_name, val_list in m2ms.iteritems():
+            if hasattr(self.instance, field_name):
+                setattr(self.instance, field_name, val_list)
 
     def find_existing_instance(self):
         """
