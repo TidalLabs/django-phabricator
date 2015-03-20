@@ -9,6 +9,17 @@ except ImportError:
 
 readme = open('README.rst').read()
 
+requirements = [
+    'django>=1.7',
+    'django-model-utils>=2.2',
+    'phabricator',
+    'pytz',
+]
+
+extras = {
+    'develop': ['mock'],
+}
+
 setup(
     name='django-phabricator',
     version='0.1',
@@ -18,8 +29,8 @@ setup(
     author_email='noemi@tid.al',
     packages=find_packages(),
     include_package_data=True,
-    install_requires=[
-    ],
+    install_requires=requirements,
+    extras_require=extras,
     license="BSD",
     zip_safe=False,
 )
