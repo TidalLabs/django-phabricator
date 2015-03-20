@@ -7,6 +7,7 @@ we give those fields different names (e.g. "date_opened" and "date_updated" for 
 """
 
 from django.db import models
+from dj_phab.queryset import DateGroupingQuerySet
 from model_utils import Choices
 from model_utils.models import TimeStampedModel
 
@@ -48,6 +49,13 @@ class Repository(TimeStampedModel, PhabModel):
         ordering=['callsign',]
 
 
+class PullRequestBaseManager(models.Manager):
+    # @TODO:
+    # Frequency by granularity
+    # Average size by granularity
+    pass
+
+
 class PullRequest(TimeStampedModel, PhabModel):
     STATUS = Choices(
         (0, 'needs_review', u"Needs Review"),
@@ -71,6 +79,8 @@ class PullRequest(TimeStampedModel, PhabModel):
     commit_count = models.PositiveSmallIntegerField()
     date_opened = models.DateTimeField()
     date_updated = models.DateTimeField()
+
+    objects = PullRequestBaseManager.from_queryset(DateGroupingQuerySet)()
 
     def d_id(self):
         return u"D%s" % self.phab_id
