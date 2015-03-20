@@ -94,7 +94,7 @@ class DateGroupingQuerySet(models.QuerySet):
                    })\
                    ._augment_values(year_part_name, week_part_name)
 
-    def _group_by_date(self, fieldname):
+    def _group_by_day(self, fieldname):
         year_part_name, year_sql = self._year_select(fieldname)
         month_part_name, month_sql = self._month_select(fieldname)
         day_part_name, day_sql = self._day_select(fieldname)
@@ -122,7 +122,7 @@ class DateGroupingQuerySet(models.QuerySet):
             raise FieldTypeError(u"Cannot group by %s: not a DateField or DateTimeField" % fieldname)
 
         if granularity == 'day':
-            return self._group_by_date(fieldname)
+            return self._group_by_day(fieldname)
         elif granularity == 'week':
             return self._group_by_week(fieldname)
         elif granularity == 'month':
