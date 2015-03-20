@@ -17,6 +17,10 @@ class FieldTypeError(Exception):
     pass
 
 
+class GranularityError(ValueError):
+    pass
+
+
 class DateGroupingQuerySet(models.QuerySet):
     """
     QuerySet capable of grouping aggregates by a part of a date field
@@ -37,8 +41,10 @@ class DateGroupingQuerySet(models.QuerySet):
         @return bool Whether the field is a date/datetime
         """
         try:
+            # technically, Options.get_field() was formalized in
+            # Django 1.8, but it works in 1.7
             field = self.model._meta.get_field(fieldname)
-            return field.get_internal_type() in ['DateTimeField', 'DateTimeField',]
+            return field.get_internal_type() in ['DateField', 'DateTimeField',]
         except FieldDoesNotExist:
             return False
 
@@ -115,7 +121,7 @@ class DateGroupingQuerySet(models.QuerySet):
         Generate a copy of the queryset with `.values()` adjusted to group aggregates
         by the field indicated, with the granularity indicated.
 
-        If granularity is unrecognized, will be a no-op.
+        If granularity is unrecognized, will raise a GranularityError.
 
         If fieldname is not a DateTimeField, will raise FieldTypeError.
 
@@ -124,7 +130,7 @@ class DateGroupingQuerySet(models.QuerySet):
         @return ValuesQuerySet
         """
         if not self._is_datefield(fieldname):
-            raise FieldTypeError(u"Cannot group by %s: not a DateField or DateTimeField" % fieldname)
+            raise FieldTypeError(u"Cannot group by '%s': not a DateField or DateTimeField" % fieldname)
 
         if granularity == 'day':
             return self._group_by_day(fieldname)
@@ -134,5 +140,6 @@ class DateGroupingQuerySet(models.QuerySet):
             return self._group_by_year_month(fieldname)
         elif granularity == 'year':
             return self._group_by_year(fieldname)
-        else:
-            return self
+
+        raise GranularityError(u"Granularity '%s' not recognized. Please supply one of "
+                               u"'year', 'month', 'week', 'day'.")
