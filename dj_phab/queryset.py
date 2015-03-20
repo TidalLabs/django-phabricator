@@ -45,19 +45,24 @@ class DateGroupingQuerySet(models.QuerySet):
     def _annotate_count(self, fieldname):
         return self
 
-    def _augment_values(self, fieldname):
+    def _augment_values(self, *fieldnames):
         """
-        Add field to values returned / grouped by in queryset instead of replacing
+        Add fields to values returned / grouped by in queryset instead of replacing
         list of fields already indicated
 
-        @param str fieldname Name of field to add to query
+        @param str* fieldname Name of field to add to query
         @return ValuesQuerySet
         """
-        if hasattr(self, '_fields') and fieldname not in self._fields:
-            fields = self._fields
-            fields.append(fieldname)
+        if hasattr(self, '_fields'):
+            # clone fields list
+            fields = self._fields[:]
+            for fieldname in fieldnames:
+                if fieldname not in self.fields:
+                    fields.append(fieldname)
         else:
-            fields = [fieldname]
+            fields = fieldnames
+
+
         return self.values(*fields)
 
     def _year_select(self, fieldname):
@@ -85,7 +90,7 @@ class DateGroupingQuerySet(models.QuerySet):
                    })\
                    ._augment_values(year_part_name, month_part_name)
 
-    def _group_by_year_month_week(self, fieldname):
+    def _group_by_year_week(self, fieldname):
         year_part_name, year_sql = self._year_select(fieldname)
         week_part_name, week_sql = self._week_select(fieldname)
         return self.extra(select={
@@ -124,9 +129,9 @@ class DateGroupingQuerySet(models.QuerySet):
         if granularity == 'day':
             return self._group_by_day(fieldname)
         elif granularity == 'week':
-            return self._group_by_week(fieldname)
+            return self._group_by_year_week(fieldname)
         elif granularity == 'month':
-            return self._group_by_month(fieldname)
+            return self._group_by_year_month(fieldname)
         elif granularity == 'year':
             return self._group_by_year(fieldname)
         else:

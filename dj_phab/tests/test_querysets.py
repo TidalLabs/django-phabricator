@@ -52,7 +52,17 @@ class TestDateGroupingQuerySet(TestCase):
         self.assertItemsEqual(tuples, [(2014, 200), (2015, 1000), (2016, 1800), (2017, 2600)])
 
     def test_group_month(self):
-        self.fail()
+        # 2 each in 2014-01, 2014-02, 2014-03, 2014-04
+        # values 0, 16, 32, 48, 64, 80, 96, 112
+        # sums 16, 80, 144, 208
+        self.make_models(8, 16)
+        sums = DGQSTestModel.objects.group_by_date('a_date', 'month')\
+                            .annotate(sum=models.Sum('value'))
+        tuples = [(row['a_date_year'], row['a_date_month'], row['sum']) for row in sums]
+        self.assertItemsEqual(tuples, [(2014, 1, 16),
+                                       (2014, 2, 80),
+                                       (2014, 3, 144),
+                                       (2014, 4, 208)])
 
     def test_group_week(self):
         self.fail()
