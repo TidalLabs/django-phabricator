@@ -66,7 +66,7 @@ class TestDateGroupingQuerySet(TestCase):
 
     def test_group_week(self):
         # 2 each in 2014-01 weeks 1, 2, 3, 4
-        # values 0, 3, 7, 10, 14, 18, 21, 25
+        # values (rounding down) 0, 3, 7, 10, 14, 18, 21, 25
         # sums 3, 17, 32, 46
         self.make_models(8, 3.6)
         sums = DGQSTestModel.objects.group_by_date('a_date', 'week')\
@@ -78,7 +78,21 @@ class TestDateGroupingQuerySet(TestCase):
                                        (2014, 4, 46)])
 
     def test_group_day(self):
-        self.fail()
+        # 2 each in 2014-01-01, 2014-01-02, 2014-01-03, 2014-01-04
+        # values (rounding down) 0, 0, 1, 1, 2, 2, 3, 3
+        # sums 0, 2, 4, 6
+        self.make_models(8, 0.55)
+        sums = DGQSTestModel.objects.group_by_date('a_date', 'day')\
+                            .annotate(sum=models.Sum('value'))
+        tuples = [(row['a_date_year'],
+                   row['a_date_month'],
+                   row['a_date_day'],
+                   row['sum'])
+                  for row in sums]
+        self.assertItemsEqual(tuples, [(2014, 1, 1, 0),
+                                       (2014, 1, 2, 2),
+                                       (2014, 1, 3, 4),
+                                       (2014, 1, 4, 6)])
 
     def test_group_and_filter(self):
         self.fail()
