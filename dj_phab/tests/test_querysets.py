@@ -95,4 +95,17 @@ class TestDateGroupingQuerySet(TestCase):
                                        (2014, 1, 4, 6)])
 
     def test_group_and_filter(self):
-        self.fail()
+        # 2 each in 2014-01, 2014-02, 2014-03, 2014-04
+        # values 0, 16, 32, 48, 64, 80, 96, 112
+        # Trim first 2 and last 1
+        # sums 80, 144, 96
+        self.make_models(8, 16)
+        jan_20 = timezone.make_aware(datetime(2014, 1, 20), self.tz)
+        apr_15 = timezone.make_aware(datetime(2014, 4, 15), self.tz)
+        sums = DGQSTestModel.objects.filter(a_date__gt=jan_20, a_date__lt=apr_15)\
+                            .group_by_date('a_date', 'month')\
+                            .annotate(sum=models.Sum('value'))
+        tuples = [(row['a_date_year'], row['a_date_month'], row['sum']) for row in sums]
+        self.assertItemsEqual(tuples, [(2014, 2, 80),
+                                       (2014, 3, 144),
+                                       (2014, 4, 96)])
