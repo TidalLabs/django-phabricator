@@ -1,1 +1,5 @@
 .arcconfig
+*.pyc
+*.pyo
+*.egg-info
+*.orig
