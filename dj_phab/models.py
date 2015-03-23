@@ -49,10 +49,29 @@ class Repository(TimeStampedModel, PhabModel):
         ordering=['callsign',]
 
 
+class PullRequestQuerySet(DateGroupingQuerySet):
+    """
+    Custom queryset/manager utility methods for PullRequest.  Warning: business logic!
+    """
+
+    def size_and_frequency_by_granularity(self, granularity):
+        """
+        Group data by time period based on granularity; annotate with mean line count
+        (``avg_lines``) and total number of reviews (``review_count``) per period;
+        filter by "closed" status.
+
+        @param 'year'|'month'|'week'|'day' granularity Time period to group by
+        @return QuerySet
+        """
+        return self.filter(status=PullRequest.STATUS.closed)\
+                   .group_by_date('date_opened', granularity)\
+                   .annotate(**{
+                        'avg_lines': models.Avg('line_count'),
+                        'review_count': models.Count('id'),
+                    })
+
+
 class PullRequestBaseManager(models.Manager):
-    # @TODO:
-    # Frequency by granularity
-    # Average size by granularity
     pass
 
 
@@ -80,7 +99,7 @@ class PullRequest(TimeStampedModel, PhabModel):
     date_opened = models.DateTimeField()
     date_updated = models.DateTimeField()
 
-    objects = PullRequestBaseManager.from_queryset(DateGroupingQuerySet)()
+    objects = PullRequestBaseManager.from_queryset(PullRequestQuerySet)()
 
     def d_id(self):
         return u"D%s" % self.phab_id
@@ -89,7 +108,7 @@ class PullRequest(TimeStampedModel, PhabModel):
         return self.title[:32]
 
     class Meta:
-        ordering = ['date_opened',]
+        ordering = ['-date_opened',]
 
 
 class LastImportTracker(models.Model):

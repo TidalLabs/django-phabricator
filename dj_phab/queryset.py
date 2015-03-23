@@ -68,7 +68,6 @@ class DateGroupingQuerySet(models.QuerySet):
         else:
             fields = fieldnames
 
-
         return self.values(*fields)
 
     def _year_select(self, fieldname):
@@ -85,7 +84,9 @@ class DateGroupingQuerySet(models.QuerySet):
 
     def _group_by_year(self, fieldname):
         year_part_name, year_sql = self._year_select(fieldname)
-        return self.extra(select={ year_part_name: year_sql,})._augment_values(year_part_name)
+        return self.extra(select={ year_part_name: year_sql,})\
+                   ._augment_values(year_part_name)\
+                   .order_by(year_part_name)
 
     def _group_by_year_month(self, fieldname):
         year_part_name, year_sql = self._year_select(fieldname)
@@ -94,7 +95,8 @@ class DateGroupingQuerySet(models.QuerySet):
                         year_part_name: year_sql,
                         month_part_name: month_sql,
                    })\
-                   ._augment_values(year_part_name, month_part_name)
+                   ._augment_values(year_part_name, month_part_name)\
+                   .order_by(year_part_name, month_part_name)
 
     def _group_by_year_week(self, fieldname):
         year_part_name, year_sql = self._year_select(fieldname)
@@ -103,7 +105,8 @@ class DateGroupingQuerySet(models.QuerySet):
                         year_part_name: year_sql,
                         week_part_name: week_sql,
                    })\
-                   ._augment_values(year_part_name, week_part_name)
+                   ._augment_values(year_part_name, week_part_name)\
+                   .order_by(year_part_name, week_part_name)
 
     def _group_by_day(self, fieldname):
         year_part_name, year_sql = self._year_select(fieldname)
@@ -114,7 +117,8 @@ class DateGroupingQuerySet(models.QuerySet):
                         month_part_name: month_sql,
                         day_part_name: day_sql,
                    })\
-                   ._augment_values(year_part_name, month_part_name, day_part_name)
+                   ._augment_values(year_part_name, month_part_name, day_part_name)\
+                   .order_by(year_part_name, month_part_name, day_part_name)
 
     def group_by_date(self, fieldname, granularity):
         """
