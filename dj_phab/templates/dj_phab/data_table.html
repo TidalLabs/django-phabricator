@@ -1,0 +1,42 @@
+{% extends 'dj_phab/base.html' %}
+
+{% block djp_title %}{{ block.super }} - Data Table{% endblock djp_title %}
+
+{% block djp_head_js %}
+{% endblock djp_head_js %}
+
+{% block djp_head_css %}
+{% endblock djp_head_css %}
+
+{% block djp_main %}
+
+<h1>Data</h1>
+
+{% if periods.exists %}
+	<table>
+		<thead>
+			<tr>
+				<th>Period</th>
+				<th>Number of Diffs</th>
+				<th>Average (mean) Lines Changed</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for period in periods %}
+				<tr>
+					<td>NEED_A_TEMPLATE_TAG</td>
+					<td>{{ period.review_count }}</td>
+					<td>{{ period.avg_lines|floatformat:"0" }}</td>
+				</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+{% else %}
+	<p>No data found for the period specified.</p>
+{% endif %}
+
+{% endblock djp_main %}
+
+{% block djp_footer %}
+{% endblock djp_footer %}
+
