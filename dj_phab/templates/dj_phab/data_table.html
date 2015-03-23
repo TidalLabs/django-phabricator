@@ -1,4 +1,5 @@
 {% extends 'dj_phab/base.html' %}
+{% load date_grouping %}
 
 {% block djp_title %}{{ block.super }} - Data Table{% endblock djp_title %}
 
@@ -13,7 +14,7 @@
 <h1>Data</h1>
 
 {% if periods.exists %}
-	<table>
+	<table border="1" cellpadding="5" cellspacing="0">
 		<thead>
 			<tr>
 				<th>Period</th>
@@ -24,7 +25,7 @@
 		<tbody>
 			{% for period in periods %}
 				<tr>
-					<td>NEED_A_TEMPLATE_TAG</td>
+					<td>{% time_period period granularity=granularity fieldname=time_period_field %}</td>
 					<td>{{ period.review_count }}</td>
 					<td>{{ period.avg_lines|floatformat:"0" }}</td>
 				</tr>

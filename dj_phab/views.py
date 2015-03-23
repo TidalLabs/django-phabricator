@@ -20,3 +20,9 @@ class DataView(ListView):
 
     def get_queryset(self):
         return PullRequest.objects.size_and_frequency_by_granularity(self.granularity)
+
+    def get_context_data(self, **kwargs):
+        context = super(DataView, self).get_context_data(**kwargs)
+        context['granularity'] = self.granularity
+        context['time_period_field'] = 'date_opened'
+        return context
