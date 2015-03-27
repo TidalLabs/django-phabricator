@@ -49,6 +49,13 @@ class Repository(TimeStampedModel, PhabModel):
         ordering=['callsign',]
 
 
+class UpdatedFile(TimeStampedModel):
+    """
+    A file referenced in a diff
+    """
+    filename = models.CharField(max_length=255, unique=True) # If we have file paths longer than 255, we have other problems!
+
+
 class PullRequestQuerySet(DateGroupingQuerySet):
     """
     Custom queryset/manager utility methods for PullRequest.  Warning: business logic!
@@ -88,6 +95,7 @@ class PullRequest(TimeStampedModel, PhabModel):
 
     phab_id = models.IntegerField()
     repository = models.ForeignKey(Repository, null=True, blank=True)
+    files = models.ManyToManyField(UpdatedFile, related_name='diffs')
     title = models.CharField(max_length=255)
     author = models.ForeignKey(PhabUser)
     reviewers = models.ManyToManyField(PhabUser, related_name='reviews')

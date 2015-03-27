@@ -5,7 +5,7 @@ import datetime
 from collections import namedtuple
 from django.db import models, transaction
 from django.utils import timezone
-from dj_phab.models import PhabUser, Project, Repository, PullRequest
+from dj_phab.models import PhabUser, Project, Repository, PullRequest, UpdatedFile
 
 
 class MissingRequiredDataError(Exception):
@@ -16,7 +16,39 @@ class RelationNotImportedError(Exception):
     pass
 
 
-class Importer(object):
+class BaseImporter(object):
+
+    def __init__(self, record, *args, **kwargs):
+        super(BaseImporter, self).__init__(*args, **kwargs)
+        self.record = record
+        # search for an instance matching the record and assign to self.instance
+        self.instance = self.find_existing_instance()
+
+    @classmethod
+    def convert_records(cls, records):
+        """
+        Convert a list of records received from Phab into persisted Django models
+
+        @param list<any> records
+        @return list<Model> Model instances
+        """
+        instances = []
+
+        for record in records:
+            importer = cls(record)
+            importer.convert_record()
+            instances.append(importer.instance)
+
+        return instances
+
+    def convert_record(self):
+        raise NotImplementedError()
+
+    def find_existing_instance(self):
+        raise NotImplementedError()
+
+
+class Importer(BaseImporter):
     """
     Base class for all importers that convert Phab data to Django models
 
@@ -27,22 +59,6 @@ class Importer(object):
         'Options',
         ['phab_name', 'conversion', 'required', 'default']
     )
-
-    def __init__(self, record, *args, **kwargs):
-        super(Importer, self).__init__(*args, **kwargs)
-        self.record = record
-        # search for an instance matching the record and assign to self.instance
-        self.instance = self.find_existing_instance()
-
-    @classmethod
-    def convert_records(cls, records):
-        """
-        Convert a list of records received from Phab into persisted Django models
-
-        @param list records
-        """
-        for record in records:
-            cls(record).convert_record()
 
     def convert_record(self):
         """
@@ -161,6 +177,9 @@ class Importer(object):
                         raise
                     else:
                         val = None
+            elif options.conversion == 'm2m':
+                # We should expect a list of model instances here
+                val = raw_val
 
             # other types
             elif options.conversion in (str, 'phid'):
@@ -182,7 +201,7 @@ class Importer(object):
 
             # add it to the list of values we'll return
             if val is not None:
-                if m2m_model:
+                if m2m_model or options.conversion == 'm2m':
                     m2ms[django_name] = val
                 else:
                     fields[django_name] = val
@@ -234,6 +253,7 @@ class PullRequestImporter(Importer):
         'phid':         Importer.Options('phid', 'phid', True, None),
         'phab_id':      Importer.Options('id', int, True, None),
         'repository':   Importer.Options('repositoryPHID', {'phab_fk': Repository}, False, None),
+        'files':        Importer.Options('files', 'm2m', False, None),
         'title':        Importer.Options('title', str, True, ''),
         'author':       Importer.Options('authorPHID', {'phab_fk': PhabUser}, True, None),
         'reviewers':    Importer.Options('reviewers', {'phab_m2m': PhabUser}, True, None),
@@ -245,6 +265,18 @@ class PullRequestImporter(Importer):
         'date_opened':  Importer.Options('dateCreated', 'timestamp', True, None),
         'date_updated': Importer.Options('dateModified', 'timestamp', True, None),
     }
+
+
+class UpdatedFileImporter(BaseImporter):
+    def find_existing_instance(self):
+        try:
+            return UpdatedFile.objects.get(filename=self.record)
+        except UpdatedFile.DoesNotExist:
+            return None
+
+    def convert_record(self):
+        if not self.instance:
+            self.instance = UpdatedFile.objects.create(filename=self.record)
 
 
 class ImportRunner(object):
@@ -271,5 +303,11 @@ class ImportRunner(object):
         RepositoryImporter.convert_records(self.api.fetch_repositories())
 
         # Fetch diffs modified since last import
-        PullRequestImporter.convert_records(
-            self.api.fetch_pull_requests(modified_since=last_import_time))
+        diffs = self.api.fetch_pull_requests(modified_since=last_import_time)
+
+        for diff in diffs:
+            filenames = self.api.fetch_files(int(diff['id']))
+            files = UpdatedFileImporter.convert_records(filenames)
+            diff['files'] = files
+
+        PullRequestImporter.convert_records(diffs)

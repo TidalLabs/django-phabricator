@@ -7,6 +7,7 @@ def prep_phab_mocks():
     phabricator.project.query = MagicMock(return_value=get_dummy_projects())
     phabricator.repository.query = MagicMock(return_value=get_dummy_repos())
     phabricator.differential.query = MagicMock(side_effect=get_batched_diffs)
+    phabricator.differential.getcommitpaths = MagicMock(return_value=get_dummy_files())
 
     return phabricator
 
@@ -848,3 +849,14 @@ def get_dummy_diffs(order=None, **kwargs):
               }
             }
         ''')
+
+
+def get_dummy_files(*args, **kwargs):
+    return ResponseWrapper(json.loads('''
+        {
+          "0" : "assets\/anvil\/campaign\/tpls\/hammer-item.html",
+          "1" : "assets\/anvil\/campaign\/tpls\/hammer-tile.html",
+          "2" : "assets\/anvil\/campaign\/tpls\/hammers.html",
+          "3" : "assets\/anvil\/campaign\/views\/hammers.assets"
+        }
+    '''))

@@ -88,3 +88,6 @@ class ConduitAPI(object):
                 break
 
         return pull_requests
+
+    def fetch_files(self, pull_request_id, **kwargs):
+        return self.phabricator.differential.getcommitpaths(revision_id=pull_request_id).response

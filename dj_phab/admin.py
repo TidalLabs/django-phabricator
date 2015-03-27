@@ -28,6 +28,7 @@ class PullRequestAdmin(admin.ModelAdmin):
     search_fields = ['title', 'phid',]
     list_filter = ['author', 'reviewers', 'status', 'repository',]
     date_filter = 'date_opened'
+    filter_horizontal = ['files',]
 
 
 class LastImportTrackerAdmin(admin.ModelAdmin):

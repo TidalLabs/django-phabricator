@@ -54,3 +54,8 @@ class TestConduitAPI(TestCase):
 
         statuses_list = filter(lambda pr: pr['id'] == '1462', prs)
         self.assertEqual(len(statuses_list), 0)
+
+    def test_fetch_files(self):
+        files = self.conduit.fetch_files(123)
+        self.assertEqual(len(files), 4)
+        self.assertIn('assets/anvil/campaign/tpls/hammers.html', files)

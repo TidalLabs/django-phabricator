@@ -2,9 +2,9 @@ import datetime
 from copy import deepcopy
 from django.test import TestCase
 from django.utils import timezone
-from dj_phab.models import PhabUser, Project, Repository, PullRequest
+from dj_phab.models import PhabUser, Project, Repository, PullRequest, UpdatedFile
 from dj_phab.importer import UserImporter, ProjectImporter, RepositoryImporter, \
-                             PullRequestImporter
+                             PullRequestImporter, UpdatedFileImporter
 
 # Create your tests here.
 class TestImporter(TestCase):
@@ -163,6 +163,33 @@ class TestRepositoryImporter(TestCase):
         self.assertEqual(sirius.name, 'Sirius Cybernetics')
 
 
+class TestUpdatedFileImporter(TestCase):
+    file_list = [
+        'assets/anvil/campaign/tpls/hammer-tile.html',
+        'assets/anvil/campaign/tpls/hammer-item.html',
+        'assets/anvil/campaign/views/hammers.assets',
+        'assets/anvil/campaign/tpls/hammers.html'
+    ]
+
+    def test_convert_record(self):
+        self.assertEqual(UpdatedFile.objects.count(), 0)
+
+        UpdatedFileImporter('assets/anvil/campaign/views/hammers.assets').convert_record()
+
+        self.assertEqual(UpdatedFile.objects.count(), 1)
+        hammers = UpdatedFile.objects.get(filename__contains='hammers')
+        self.assertEqual(hammers.filename, 'assets/anvil/campaign/views/hammers.assets')
+
+    def test_convert_records(self):
+        self.assertEqual(UpdatedFile.objects.count(), 0)
+
+        UpdatedFileImporter.convert_records(self.file_list)
+
+        self.assertEqual(UpdatedFile.objects.count(), 4)
+        hammers = UpdatedFile.objects.filter(filename__contains='hammers')
+        self.assertEqual(hammers.count(), 2)
+
+
 class TestPullRequestImporter(TestCase):
     diff_1_dict = {
         u'sourcePath': None,
@@ -244,5 +271,3 @@ class TestPullRequestImporter(TestCase):
         self.assertEqual(updated.status, PullRequest.STATUS.abandoned)
         reviewer_usernames = [reviewer.user_name for reviewer in updated.reviewers.all()]
         self.assertItemsEqual(reviewer_usernames, ['noemi', 'obiwan',])
-
-
