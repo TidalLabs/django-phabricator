@@ -859,4 +859,4 @@ def get_dummy_files(*args, **kwargs):
           "2" : "assets\/anvil\/campaign\/tpls\/hammers.html",
           "3" : "assets\/anvil\/campaign\/views\/hammers.assets"
         }
-    '''))
+    ''').values())
