@@ -72,6 +72,7 @@ class PullRequestQuerySet(DateGroupingQuerySet):
     """
     Custom queryset/manager utility methods for PullRequest.  Warning: business logic!
     """
+
     def size_and_frequency_by_granularity(self, granularity):
         """
         Group data by time period based on granularity; annotate with mean line count
