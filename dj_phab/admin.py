@@ -27,7 +27,7 @@ class PullRequestAdmin(admin.ModelAdmin):
     list_display_links = ['phab_id', 'abbrev_title',]
     search_fields = ['title', 'phid',]
     list_filter = ['author', 'reviewers', 'status', 'repository',]
-    date_filter = 'date_opened'
+    date_hierarchy = 'date_opened'
     filter_horizontal = ['files',]
 
 

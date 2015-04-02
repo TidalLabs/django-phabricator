@@ -23,6 +23,9 @@ class PhabUser(TimeStampedModel, PhabModel):
     user_name = models.CharField(max_length=255, unique=True)
     real_name = models.CharField(max_length=255)
 
+    def __unicode__(self):
+        return self.real_name
+
     class Meta:
         ordering = ['real_name',]
 
@@ -30,6 +33,9 @@ class PhabUser(TimeStampedModel, PhabModel):
 class Project(TimeStampedModel, PhabModel):
     phab_id = models.IntegerField()
     name = models.CharField(max_length=255)
+
+    def __unicode__(self):
+        return self.name
 
     class Meta:
         ordering = ['name',]
@@ -44,6 +50,9 @@ class Repository(TimeStampedModel, PhabModel):
     remote_uri = models.CharField(max_length=255, help_text=u"URI of origin repo")
     is_active = models.BooleanField(default=True)
 
+    def __unicode__(self):
+        return self.name
+
     class Meta:
         verbose_name_plural = u"Repositories"
         ordering=['callsign',]
@@ -54,6 +63,9 @@ class UpdatedFile(TimeStampedModel):
     A file referenced in a diff
     """
     filename = models.CharField(max_length=255, unique=True) # If we have file paths longer than 255, we have other problems!
+
+    def __unicode__(self):
+        return self.filename
 
 
 class PullRequestQuerySet(DateGroupingQuerySet):
@@ -107,6 +119,9 @@ class PullRequest(TimeStampedModel, PhabModel):
     date_updated = models.DateTimeField()
 
     objects = PullRequestBaseManager.from_queryset(PullRequestQuerySet)()
+
+    def __unicode__(self):
+        return self.d_id()
 
     def d_id(self):
         return u"D%s" % self.phab_id
