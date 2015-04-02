@@ -7,6 +7,7 @@ from dj_phab import views
 urlpatterns = patterns('',
     url(r'^$', views.IndexView.as_view(), name='djp-index'),
     url(r'^basic/$', views.DataView.as_view(), name='djp-basic'),
+    url(r'^basic/(?P<granularity>year|month|week|day)$', views.DataView.as_view(), name='djp-basic_granular'),
 )
 
 

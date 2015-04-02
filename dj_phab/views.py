@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.shortcuts import render
 from django.views.generic import ListView
 from django.views.generic.base import TemplateView
@@ -19,7 +20,13 @@ class DataView(ListView):
         return super(DataView, self).get(request, **kwargs)
 
     def get_queryset(self):
-        return PullRequest.objects.size_and_frequency_by_granularity(self.granularity)
+        exclude_above = getattr(settings, 'PHAB_STATS', {}).get('huge_diff_size', 2500)
+        exclude_below = getattr(settings, 'PHAB_STATS', {}).get('small_diff_size', 5)
+
+        diffs_without_outliers = PullRequest.objects.exclude(line_count__gte=exclude_above)\
+                                                    .exclude(line_count__lte=exclude_below)
+
+        return diffs_without_outliers.size_and_frequency_by_granularity(self.granularity)
 
     def get_context_data(self, **kwargs):
         context = super(DataView, self).get_context_data(**kwargs)

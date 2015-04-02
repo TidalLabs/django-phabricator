@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime, timedelta
 from django.core.urlresolvers import reverse
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.utils import timezone
 from dj_phab.models import PullRequest, PhabUser
 
@@ -57,3 +57,22 @@ class TestDataView(TestCase):
         self.assertContains(response, u"40")
         self.assertContains(response, u"72")
         self.assertContains(response, u"104")
+
+    @override_settings(PHAB_STATS={
+                                      'huge_diff_size': 32,
+                                      'small_diff_size': 7,
+                                  })
+    def test_basic_excludes(self):
+        # 2 each in 2014-01 weeks 1, 2, 3, 4, 5, 6
+        # values (rounding down) 0, 3, 7, 10, 14, 18, 21, 25, 28, 32, 36, 39
+        # 0th (0) and 10th (36) excluded because closed
+        # 0th thru 2nd and 9th thru 11th excluded because too large
+        # averages 10, 16, 23, 28
+        self.make_models(12, 3.6)
+        response = self.client.get(reverse('djp-basic_granular', kwargs={'granularity': 'week'}))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, u"10")
+        self.assertContains(response, u"14")
+        self.assertContains(response, u"23")
+        self.assertContains(response, u"28")
+        self.assertNotContains(response, u"39")
