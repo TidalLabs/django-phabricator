@@ -72,6 +72,22 @@ class PullRequestQuerySet(DateGroupingQuerySet):
     """
     Custom queryset/manager utility methods for PullRequest.  Warning: business logic!
     """
+    def count_by_granularity(self, granularity):
+        """
+        Group data by time period based on granularity; annotate with total
+        number of reviews (``review_count``) per period;
+        filter by "closed" status.
+
+        @param 'year'|'month'|'week'|'day' granularity Time period to group by
+        @return QuerySet
+        """
+        return self.filter(status=PullRequest.STATUS.closed)\
+                   .group_by_date('date_opened', granularity)\
+                   .annotate(**{
+                        'avg_lines': models.Avg('line_count'),
+                        'review_count': models.Count('id'),
+                    })
+
 
     def size_and_frequency_by_granularity(self, granularity):
         """

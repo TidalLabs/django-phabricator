@@ -13,21 +13,27 @@
 
 <h1>Data</h1>
 
-{% if periods.exists %}
+{% if periods %}
 	<table border="1" cellpadding="5" cellspacing="0">
 		<thead>
 			<tr>
 				<th>Period</th>
 				<th>Number of Diffs</th>
 				<th>Average (mean) Lines Changed</th>
+				<th>Num huge diffs (> 2500 lines)</th>
+				<th>Num XL diffs (> 1000 lines)</th>
+				<th>Num large diffs (> 500 lines)</th>
 			</tr>
 		</thead>
 		<tbody>
-			{% for period in periods %}
+			{% for time_period, data in periods.items %}
 				<tr>
-					<td>{% time_period period granularity=granularity fieldname=time_period_field %}</td>
-					<td>{{ period.review_count }}</td>
-					<td>{{ period.avg_lines|floatformat:"0" }}</td>
+					<td>{{ time_period }}</td>
+					<td>{% lookup data 'review_count' 0 %}</td>
+					<td>{% filter floatformat:"0" %}{% lookup data 'avg_lines' 'N/A' %}{% endfilter %}</td>
+					<td>{% lookup data 'huge_count' 0 %}</td>
+					<td>{% lookup data 'xl_count' 0 %}</td>
+					<td>{% lookup data 'large_count' 0 %}</td>
 				</tr>
 			{% endfor %}
 		</tbody>
