@@ -4,6 +4,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from dj_phab.conduit import ConduitAPI
+from dj_phab.defaults import get_batch_size
 from dj_phab.importer import ImportRunner
 from dj_phab.models import LastImportTracker
 
@@ -19,7 +20,7 @@ class Command(NoArgsCommand):
         last_import_time = LastImportTracker.get_last_import_time()
 
         # Set up our API connection
-        conduit = ConduitAPI(Phabricator(), getattr(settings, 'IMPORT_BATCH_SIZE', 50))
+        conduit = ConduitAPI(Phabricator(), get_batch_size())
 
         # Start a transaction; will commit on completion of block; rollback upon uncaught
         # exception
