@@ -29,6 +29,36 @@ If you intend to import data, create a ``.arcrc`` file in your home directory.  
 
    arc install-certificate <URI of Phabricator instance>
 
+--------
+Settings
+--------
+
+The following settings (and all keys in the dict) are optional:
+
+.. code-block:: python
+
+   # settings.py
+
+   # Configuration for stats reporting
+   # The values that are appropriate for your team may depend on your programming language and workflow
+   PHAB_STATS = {
+       # How many records to fetch at a time for data imports that may be paginated
+       # Optional setting; will default to 50.
+       'IMPORT_BATCH_SIZE': 50,
+
+       # Optional setting.  If DIFF_SIZES or any of its keys is omitted,
+       # the numbers below will be used as defaults
+       'DIFF_SIZES': {
+           # diffs with this number of lines or more will not be included in averages or frequency data:
+           'huge_diff_size': 2500,
+           # diffs with this number of lines or fewer will not be included in averages or frequency data
+           'small_diff_size': 5,
+           # additional counts will be calculated of diffs with more than these number of lines:
+           'xl_diff_size': 1000,
+           'large_diff_size': 500,
+       }
+   }
+
 ==============
 Importing Data
 ==============
