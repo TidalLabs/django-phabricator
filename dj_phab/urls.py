@@ -3,11 +3,14 @@ from django.conf import settings
 from django.conf.urls import patterns, include, url
 from django.views.generic.base import TemplateView
 from dj_phab import views
+from dj_phab.defaults import get_granularities
+
+granularities = '|'.join(get_granularities())
 
 urlpatterns = patterns('',
     url(r'^$', views.IndexView.as_view(), name='djp-index'),
     url(r'^basic/$', views.DataView.as_view(), name='djp-basic'),
-    url(r'^basic/(?P<granularity>year|month|week|day)/$', views.DataView.as_view(), name='djp-basic_granular'),
+    url(r'^basic/(?P<granularity>%s)/$' % granularities, views.DataView.as_view(), name='djp-basic_granular'),
 )
 
 

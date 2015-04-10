@@ -11,7 +11,7 @@ except ImportError:
     from django.db.models import FieldDoesNotExist
 
 from django.db import models
-
+from dj_phab.defaults import get_granularities
 
 class FieldTypeError(Exception):
     pass
@@ -133,6 +133,8 @@ class DateGroupingQuerySet(models.QuerySet):
         @param str granularity Granularity of grouping: one of "year", "month", "week", "day"
         @return ValuesQuerySet
         """
+        valid_granularities = get_granularities()
+
         if not self._is_datefield(fieldname):
             raise FieldTypeError(u"Cannot group by '%s': not a DateField or DateTimeField" % fieldname)
 
@@ -144,6 +146,7 @@ class DateGroupingQuerySet(models.QuerySet):
             return self._group_by_year_month(fieldname)
         elif granularity == 'year':
             return self._group_by_year(fieldname)
-
-        raise GranularityError(u"Granularity '%s' not recognized. Please supply one of "
-                               u"'year', 'month', 'week', 'day'.")
+        else:
+            gran_strings = ['"%s"' % gran for gran in granularities]
+        raise GranularityError(u"Granularity '%s' not recognized. Please supply one of %s." % \
+                                    ', '.join(gran_strings))
