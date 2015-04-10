@@ -1,3 +1,4 @@
+from dj_phab.defaults import get_granularities
 
 def consolidate_time_period(data, granularity='month', fieldname='date_opened'):
     """
@@ -8,7 +9,7 @@ def consolidate_time_period(data, granularity='month', fieldname='date_opened'):
     * YYYY [year]
     * YYYY-MM [month]
     * YYYY-MM-DD [day]
-    * YYYY-W [week]
+    * YYYY-Week-WW [week]
 
     @param dict data Row returned by DateGroupingQuerySet
     @param 'year'|'month'|'week'|'day' granularity What time period the data is grouped by
@@ -16,8 +17,11 @@ def consolidate_time_period(data, granularity='month', fieldname='date_opened'):
 
     @return str Formatted date
     """
-    if granularity not in ('year', 'month', 'week', 'day'):
-        raise ValueError('Granularity must be one of "year", "month", "week", or "day"')
+    granularities = get_granularities()
+
+    if granularity not in granularities:
+        gran_strings = ['"%s"' % gran for gran in granularities]
+        raise ValueError('Granularity must be one of %s.' % ', '.join(gran_strings))
 
     year_fieldname = '%s_year' % fieldname
     month_fieldname = '%s_month' % fieldname

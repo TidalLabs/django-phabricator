@@ -18,6 +18,8 @@ DIFF_SIZES = {
 
 IMPORT_BATCH_SIZE = 50
 
+GRANULARITIES = ['year', 'month', 'week', 'day']
+
 
 def get_diff_sizes():
     """
@@ -37,3 +39,7 @@ def get_batch_size():
     @return int import batch size
     """
     return getattr(settings, 'PHAB_STATS', {}).get('IMPORT_BATCH_SIZE', IMPORT_BATCH_SIZE)
+
+
+def get_granularities():
+    return GRANULARITIES

@@ -17,6 +17,14 @@
     {% endblock djp_main %}
 
     {% block djp_footer %}
+        {% block djp_nav %}
+            <ul>
+                {% for granularity in granularities %}
+                    <li><a href="{% url 'djp-basic_granular' granularity=granularity %}">Commit size and frequency by {{ granularity }}</a>
+                {% endfor %}
+            </ul>
+        {% endblock djp_nav %}
+
     {% endblock djp_footer %}
 
 {% endblock body %}
