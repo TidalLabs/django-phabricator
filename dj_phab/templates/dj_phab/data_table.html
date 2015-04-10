@@ -20,9 +20,9 @@
 				<th>Period</th>
 				<th>Number of Diffs</th>
 				<th>Average (mean) Lines Changed</th>
-				<th>Num large diffs (> 500 lines)</th>
-				<th>Num XL diffs (> 1000 lines)</th>
-				<th>Num huge diffs (> 2500 lines)</th>
+				<th>Num large diffs (> {{ diff_sizes.large_diff_size }} lines)</th>
+				<th>Num XL diffs (> {{ diff_sizes.xl_diff_size }} lines)</th>
+				<th>Num huge diffs (> {{ diff_sizes.huge_diff_size }} lines)</th>
 			</tr>
 		</thead>
 		<tbody>

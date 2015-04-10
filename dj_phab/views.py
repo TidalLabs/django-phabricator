@@ -4,6 +4,7 @@ from django.conf import settings
 from django.shortcuts import render
 from django.views.generic import ListView
 from django.views.generic.base import TemplateView
+from dj_phab.defaults import get_diff_sizes
 from dj_phab.models import PullRequest
 from dj_phab.util import consolidate_time_period, annotate_dict
 
@@ -39,12 +40,11 @@ class DataView(ListView):
                       for row in rows])
 
     def get_queryset(self):
-        # Filter our data
-        exclude_above = getattr(settings, 'PHAB_STATS', {}).get('huge_diff_size', 2500)
-        exclude_below = getattr(settings, 'PHAB_STATS', {}).get('small_diff_size', 5)
+        diff_sizes = get_diff_sizes()
 
-        diffs_without_outliers = PullRequest.objects.exclude(line_count__gte=exclude_above)\
-                                                    .exclude(line_count__lte=exclude_below)
+        # Filter our data
+        diffs_without_outliers = PullRequest.objects.exclude(line_count__gte=diff_sizes['huge_diff_size'])\
+                                                    .exclude(line_count__lte=diff_sizes['small_diff_size'])
 
         # Calculate frequency and averages
         diffs = diffs_without_outliers.size_and_frequency_by_granularity(self.granularity)
@@ -52,14 +52,9 @@ class DataView(ListView):
         # convert to a more convenient format to add annotations
         diffs = self.index_rows(diffs)
 
-        # retrieve various counts
-        large_size = getattr(settings, 'PHAB_STATS', {}).get('large_diff_size', 1000)
-        xl_size = getattr(settings, 'PHAB_STATS', {}).get('xl_diff_size', 500)
-        huge_size = exclude_above
-
-        count_huge = PullRequest.objects.filter(line_count__gte=huge_size).count_by_granularity(self.granularity)
-        count_xl = PullRequest.objects.filter(line_count__gte=xl_size).count_by_granularity(self.granularity)
-        count_large = PullRequest.objects.filter(line_count__gte=large_size).count_by_granularity(self.granularity)
+        count_huge = PullRequest.objects.filter(line_count__gte=diff_sizes['huge_diff_size']).count_by_granularity(self.granularity)
+        count_xl = PullRequest.objects.filter(line_count__gte=diff_sizes['xl_diff_size']).count_by_granularity(self.granularity)
+        count_large = PullRequest.objects.filter(line_count__gte=diff_sizes['large_diff_size']).count_by_granularity(self.granularity)
 
         # annotate data with counts
         annotate_dict(diffs, 'huge_count', self.index_rows(count_huge), 'review_count')
@@ -75,4 +70,5 @@ class DataView(ListView):
         context = super(DataView, self).get_context_data(**kwargs)
         context['granularity'] = self.granularity
         context['time_period_field'] = 'date_opened'
+        context['diff_sizes'] = get_diff_sizes()
         return context
