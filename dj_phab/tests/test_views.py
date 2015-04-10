@@ -60,10 +60,10 @@ class TestDataView(TestCase):
         self.assertEqual(periods['2014-03']['avg_lines'], 72)
         self.assertEqual(periods['2014-04']['avg_lines'], 104)
 
-    @override_settings(PHAB_STATS={
+    @override_settings(PHAB_STATS={ 'DIFF_SIZES': {
                                       'huge_diff_size': 32,
                                       'small_diff_size': 7,
-                                  })
+                                  }})
     def test_basic_excludes(self):
         # 2 each in 2014 weeks 1, 2, 3, 4, 5, 6
         # values (rounding down) 0, 3, 7, 10, 14, 18, 21, 25, 28, 32, 36, 39
@@ -86,12 +86,12 @@ class TestDataView(TestCase):
         self.assertEqual(periods['2014-Week-05']['avg_lines'], 28)
         self.assertNotIn('avg_lines', periods['2014-Week-06'])
 
-    @override_settings(PHAB_STATS={
+    @override_settings(PHAB_STATS={ 'DIFF_SIZES': {
                                       'huge_diff_size': 46,
                                       'small_diff_size': 7,
                                       'xl_diff_size': 40,
                                       'large_diff_size': 35,
-                                  })
+                                  }})
     def test_annotation(self):
         # 1 each in 2014 wweks 1, 8, 9; 2 each in 2014 weeks 2, 3, 4, 5, 6, 7
         # this is related to week 1 2014 starting in Dec 2013: http://www.epochconverter.com/date-and-time/weeknumbers-by-year.php?year=2014

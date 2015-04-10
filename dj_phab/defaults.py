@@ -5,7 +5,7 @@ from django.conf import settings
 
 
 # Configuration for stats reporting
-PHAB_STATS = {
+DIFF_SIZES = {
     # diffs with this number of lines or more will not be included in averages or frequency data:
     'huge_diff_size': 2500,
     # diffs with this number of lines or fewer will not be included in averages or frequency data
@@ -26,6 +26,14 @@ def get_diff_sizes():
     @return dict diff sizes updated with any settings overrides
     """
     diff_sizes = {}
-    diff_sizes.update(PHAB_STATS)
-    diff_sizes.update(getattr(settings, 'PHAB_STATS'))
+    diff_sizes.update(DIFF_SIZES)
+    diff_sizes.update(getattr(settings, 'PHAB_STATS', {}).get('DIFF_SIZES', {}))
     return diff_sizes
+
+def get_batch_size():
+    """
+    Get import batch size, optionally overridden by settings
+
+    @return int import batch size
+    """
+    return getattr(settings, 'PHAB_STATS', {}).get('IMPORT_BATCH_SIZE', IMPORT_BATCH_SIZE)
