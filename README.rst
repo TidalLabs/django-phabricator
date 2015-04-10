@@ -86,4 +86,4 @@ Django-phabricator provides a few reports by default [currently only statistics 
 Requirements
 ============
 
-Django-phabricator has been tested with Python 2.7 and Django 1.7.  It relies on `django-model-utils <https://django-model-utils.readthedocs.org/en/latest/>`_ and `python-phabricator <https://github.com/disqus/python-phabricator>`_.
+Django-phabricator has been tested with Python 2.7 and Django 1.7-1.8.  It relies on `django-model-utils <https://django-model-utils.readthedocs.org/en/latest/>`_ and `python-phabricator <https://github.com/disqus/python-phabricator>`_.
