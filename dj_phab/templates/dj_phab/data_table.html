@@ -20,9 +20,9 @@
 				<th>Period</th>
 				<th>Number of Diffs</th>
 				<th>Average (mean) Lines Changed</th>
-				<th>Num huge diffs (> 2500 lines)</th>
-				<th>Num XL diffs (> 1000 lines)</th>
-				<th>Num large diffs (> 500 lines)</th>
+				<th>Num large diffs (> {{ diff_sizes.large_diff_size }} lines)</th>
+				<th>Num XL diffs (> {{ diff_sizes.xl_diff_size }} lines)</th>
+				<th>Num huge diffs (> {{ diff_sizes.huge_diff_size }} lines)</th>
 			</tr>
 		</thead>
 		<tbody>
@@ -31,9 +31,9 @@
 					<td>{{ time_period }}</td>
 					<td>{% lookup data 'review_count' 0 %}</td>
 					<td>{% filter floatformat:"0" %}{% lookup data 'avg_lines' 'N/A' %}{% endfilter %}</td>
-					<td>{% lookup data 'huge_count' 0 %}</td>
-					<td>{% lookup data 'xl_count' 0 %}</td>
 					<td>{% lookup data 'large_count' 0 %}</td>
+					<td>{% lookup data 'xl_count' 0 %}</td>
+					<td>{% lookup data 'huge_count' 0 %}</td>
 				</tr>
 			{% endfor %}
 		</tbody>
